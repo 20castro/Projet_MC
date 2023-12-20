@@ -166,10 +166,10 @@ The above finally yields the following scheme:
 \Return{$\dots$}\;
 \end{algorithm}
 
-\subsection{The use of a control variable}
+\subsection{The use of a control variate}
 
 In order to improve the convergence speed, Lambert et al. \cite{main} finally propose a variance reduction technique
-for the three schemes above. It uses a control variable as introduced by Kemna et al. \cite{Vorst}.
+for the three schemes above. It uses a control variate as introduced by Kemna et al. \cite{Vorst}.
 
 \begin{equation}
 	\theta = \sum_{i=1}^n \left( e^{-rT} \left[ A_T^i - K \right]_+ + \beta \left( Z^i - \mathbb E [Z] \right) \right)
@@ -184,7 +184,7 @@ the idea relies on the approximation:
 \]
 The equality on the right-hand side justifies the validity of such approximation: if $r$ and $\sigma$ are small,
 $S_u$ can be expected to remain near $S_0$ and $\ln \frac{S_u}{S_0} \ll 1$.
-Therefore, we would like to use the following as a control variable in the case of a fixed-strike Asian call:
+Therefore, we would like to use the following as a control variate in the case of a fixed-strike Asian call:
 \[
 	Z
 	= e^{-rT} \left[ S_0 \exp \left\{ \left( r - \frac{\sigma^2}{2} \right) \frac{T}{2} +
@@ -192,22 +192,40 @@ Therefore, we would like to use the following as a control variable in the case 
 		- K \right]_+
 \]
 
-Since $\frac{1}{T} \int_0^T W_u du \sim \mathcal N \left(0, \frac{T}{3} \right)$, the exact expression
-of $\mathbb E[Z]$ is indeed known.
+Note that we can indeed compute the exact expression of $\mathbb E[Z]$. First, It\^o's lemma
+gives $d(tW_t) = tdW_t + W_tdt$ and:
 
-However, the integral of $(W_t)_t$ needs itself to be estimated. That is why we define:
+\[
+	\frac{1}{T} \int_0^T W_u du = \frac{1}{T} \int_0^T (T-s) dW_s \sim \mathcal N \left(0, \frac{T}{3} \right)
+	\quad \text{because} \quad \int_0^T (T-s)^2 ds = \frac{T^3}{3}
+\]
+
+If we note $a := \left( r - \frac{\sigma^2}{2} \right) \frac{T}{2}$, $b := \sigma \sqrt{\frac{T}{3}}$, $\rho :=\frac{K}{S_0}$,
+$x^\ast := \frac{\ln \rho - a}{b}$ and $N$ the c.d.f of $\mathcal N (0, 1)$ then:
+\begin{align*}
+	\frac{\mathbb E[Z]}{e^{-rT} S_0}
+	&= \int_{x^\ast}^{+ \infty} \left( e^{a + bx} - \rho \right) N'(x) dx \\
+	&= e^{a + \frac{b^2}{2}} \int_{x^\ast - b}^{+ \infty} N'(u) du - \rho \int_{x^\ast}^{+ \infty} N'(x) dx
+	\quad \text{with} \quad u = x - b \\
+	&= e^{a + \frac{b^2}{2}} N(b - x^\ast) - \rho N(-x^\ast)
+\end{align*}
+	
+On can check that the same computations yield Black-Scholes formula for the price of a European call.
+Thus, we have the analytical expression. We finally need to provide a way to simulate the control variate $Z$
+in each scenario. We define:
+
 \begin{equation}
 	\bar Z^{r, m} = e^{-rT} \left[ S_0 \exp \left\{ \left( r - \frac{\sigma^2}{2} \right) \frac{T}{2} +
-		\frac{\sigma}{n} \sum_{i=0}^{n-1} \bar W_{t_k}^m \right\} - K \right]_+
+		\frac{\sigma}{m} \sum_{i=0}^{m-1} \bar W_{t_k}^m \right\} - K \right]_+
 	\tag{$i$}
 \end{equation}
 
 Plugging $\bar A_T^{r, m}$ from scheme $(1)$ and $\bar Z_T^{r, m}$ in $(\ast)$ yields a new scheme:
 \begin{equation}
-	\left[ \bar A_T^{r, m} - K \right]_+ + \hat\beta_r \left( \bar Z_T^{r, m} - \mathbb E [Z] \right)
+	e^{-rT} \left[ \bar A_T^{r, m} - K \right]_+ + \hat\beta_r \left( \bar Z_T^{r, m} - \mathbb E [Z] \right)
 	\tag{4}
 \end{equation}
-where $\hat\beta_r$ is estimated with the empirical correlation method.
+where $\hat\beta_r$ is estimated with the empirical covariance of the variables.
 
 \subsection{The combination of both improvements}
 

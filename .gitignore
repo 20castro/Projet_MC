@@ -1,4 +1,5 @@
 *.log
 *.aux
 *.bbl
+*.gz
 *.DS_Store
