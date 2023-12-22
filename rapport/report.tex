@@ -143,12 +143,36 @@ Thus, we can indeed simulate it as stated above. In the following, we note:
 	\int_{t_k}^{t_{k+1}} \left( W_u - W_{t_k} \right) du \ \Big\vert \ \bar W_0^m, \bar W_{t_1}^m, \dots, \bar W_T^m
 \]
 
+$\bar I_k^m \sim \mathcal N(\mu_k, \sigma_k^2)$ with:
+\begin{align*}
+	\mu_k
+	&= \frac{1}{h} \int_{t_k}^{t_{k+1}} \mathbb E \left[ W_u - W_{t_k} \mid \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right] du \\
+	&= \frac{1}{h} \left( \bar W_{t_{k+1}}^m - \bar W_{t_k}^m \right) \int_{t_k}^{t_{k+1}} \frac{u - t_k}{t_{k+1} - t_k} du \\
+	&= \frac{1}{2} \left( \bar W_{t_{k+1}}^m - \bar W_{t_k}^m \right)
+\end{align*}
+Interchanging the conditional expectation and the integrals and Fubini's theorem yield:
+\begin{align*}
+	\sigma_k^2 &= \mathbb E \left[ \left( \frac{1}{h}
+		\int_{t_k}^{t_{k+1}} W_u du \right)^2 \ \Big\vert \ \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right]
+		- \mathbb E \left[ \frac{1}{h} \int_{t_k}^{t_{k+1}} W_u du \ \Big\vert \ \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right]^2
+		\\
+	&= \frac{1}{h^2} \iint_{t_k}^{t_{k+1}}
+		\mathrm{Cov} \left( W_u W_v \mid \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right) du dv \\
+	&= \frac{1}{h^2} \iint_{t_k}^{t_{k+1}} \frac{(t_{k+1} - u)(v - t_k)}{t_{k+1} - t_k} du dv \\
+	&= \frac{1}{h^3} \left( \int_{0}^{h} v dv \right)^2 \\
+	&= \frac{h}{4}
+\end{align*}
+
 The above finally yields the following scheme:
 
 \begin{equation}
     A_T \approx \bar A_T^{p, m} = \frac{1}{m} \sum_{k=0}^{m-1}
     	\bar S_{t_k}^m \left( 1 + \frac{rh}{2} + \sigma \bar I_k^m \right) \tag{3}
 \end{equation}
+
+Considering the value of $\mu_k$, one can note this scheme is the same as the previous one except the fact
+that (3) adds a random term with distribution $\mathcal N(0, \frac{h}{4})$ in the multiplicative factor.
+To put it differently, in comparison with (3), (2) approximates $\bar I_k^m$ by its mean.
 
 \begin{algorithm}[hbt!]
 \caption{Scheme (3) implementation}
