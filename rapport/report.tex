@@ -8,6 +8,8 @@
 \usepackage{xcolor}
 \usepackage{cancel}
 \usepackage{cite}
+\usepackage{graphicx}
+\usepackage{float}
 
 \usepackage{algorithm2e}
 \RestyleAlgo{ruled}
@@ -48,7 +50,8 @@ adapt directly to any Asian option of the form given above.
 \
 
 We first introduce and implement different Monte-Carlo approaches as developed by Lambert et al. \cite{main}
-and B. Bouchard \cite{Bouchard}. We then compare them with a PDE approach \textit{(to be chosen)}.
+and B. Bouchard \cite{Bouchard}. We then compare them with a PDE approach as presented by
+Rogers et al. \cite{Rogers}.
 
 \section{Naive approach}
 
@@ -69,6 +72,33 @@ where $\bar S_{t_k}^m$ denotes the $k$-th step of an Euler scheme. That gives th
 
 where $\left( \bar S^{m, i} \right)_{i = 1, \dots, n}$ are independent and identically distributed copies of $\bar S^m$.
 %According to B. Bouchard \cite{Bouchard}, scheme (1) has a weak error in $O \left( \frac{1}{n} \right)$.
+
+\
+
+The variance is in $O \left( \dots \right)$ and the biais is in $O \left( \dots \right)$. Figure 1 shows the result
+of this method for different values of $K$, $T$ and $\sigma$ where we took $n =10,000$ and $m=100$.
+One can already notice that it tallies with the common idea that Asian call are cheaper than European call
+for a given set of parameters. Also, quite intuitively, the gap widens when $\sigma$ and $T$ grow: the smaller
+both of them are, the closer to the initial value the underlying will remain, leading to $A_T \approx S_T \approx S_0$
+on average.
+
+\begin{figure}[H]
+  %\centering
+  \hspace*{-0.02\linewidth}\includegraphics[width=1.065\textwidth]{charts/prices.png}
+  \caption{Fixed-strike Asian call naive pricing for different values of $K$, $\sigma$ and $T$}
+\end{figure}
+
+However, these charts, particularly the one for $\sigma = 25\%$ and $T=1$y, reveal some fluctuations with
+a greater magnitude than the length of the $95\%$ confidence intervals plotted in red. This stems from the bias
+introduced by the approximation of $A_T$, that the figure does not reflect. This seems to be the main flaw of the
+naive approach: even if the variance already looks satisfactory, the bias increases rapidly with the parameters, which
+yields imprecise results.
+
+\
+
+The following models all give similar charts. In the below, we rather focus on the graphical representation
+of the convergence properties of each scheme. As suggested in the previous paragraph, this is
+the main challenge that the following approaches mean to address.
 
 \section{Improved Monte-Carlo approaches}
 \subsection{Two finer approximations}
@@ -143,7 +173,7 @@ Thus, we can indeed simulate it as stated above. In the following, we note:
 	\int_{t_k}^{t_{k+1}} \left( W_u - W_{t_k} \right) du \ \Big\vert \ \bar W_0^m, \bar W_{t_1}^m, \dots, \bar W_T^m
 \]
 
-$\bar I_k^m \sim \mathcal N(\mu_k, \sigma_k^2)$ with:
+In short, $\bar I_k^m \sim \mathcal N(\mu_k, \sigma_k^2)$ with the following parameters:
 \begin{align*}
 	\mu_k
 	&= \frac{1}{h} \int_{t_k}^{t_{k+1}} \mathbb E \left[ W_u - W_{t_k} \mid \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right] du \\
@@ -174,7 +204,9 @@ Considering the value of $\mu_k$, one can note this scheme is the same as the pr
 that (3) adds a random term with distribution $\mathcal N(0, \frac{h}{4})$ in the multiplicative factor.
 To put it differently, in comparison with (3), (2) approximates $\bar I_k^m$ by its mean.
 
-\begin{algorithm}[hbt!]
+\
+
+\begin{algorithm}[H]
 \caption{Scheme (3) implementation}
 \KwData{$n$ (number of independent simulations), $m$ (number of time steps)}
 \KwResult{Estimation and $95\%$ confidence interval}
@@ -182,13 +214,18 @@ To put it differently, in comparison with (3), (2) approximates $\bar I_k^m$ by 
 	Simulate $\bar W^{m, i}$\;
 	Deduce $\bar S^{m, i}$ using Black-Scholes formula\;
 	\For{$k=0, \dots, m - 1$}{
-		Compute the mean and variance of $\bar I_k^m$ conditionally to $\bar W^{m, i}$\;
-		Simulate $\bar I_k^m$ accordingly\;
-		$\dots$\;
+		Simulate $\bar I_k^{m, i}$ (conditionally to $\bar W^{m, i}$)\;
 	}
+	Compute $\bar A_T^{m, i}$ with $\bar S^{m, i}$, $\bar W^{m, i}$ and $\bar I_0^{m, i}, \dots, \bar I_{m-1}^{m, i}$\;
 }
-\Return{$\dots$}\;
+Compute the mean and standard error of the prices given by $\bar A_T^{m, 1}, \dots, \bar A_T^{m, n}$\;
+\Return{the MC estimate and $95\%$ confidence interval for the price}\;
 \end{algorithm}
+
+\subsection*{Results}
+
+Before going further, we suggest comparing the results given by schemes (1)-(3). \\
+\textbf{To be completed}
 
 \subsection{The use of a control variate}
 
