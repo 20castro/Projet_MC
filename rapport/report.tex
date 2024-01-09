@@ -180,17 +180,21 @@ In short, $\bar I_k^m \sim \mathcal N(\mu_k, \sigma_k^2)$ with the following par
 	&= \frac{1}{h} \left( \bar W_{t_{k+1}}^m - \bar W_{t_k}^m \right) \int_{t_k}^{t_{k+1}} \frac{u - t_k}{t_{k+1} - t_k} du \\
 	&= \frac{1}{2} \left( \bar W_{t_{k+1}}^m - \bar W_{t_k}^m \right)
 \end{align*}
-Interchanging the conditional expectation and the integrals and Fubini's theorem yield:
+Interchanging the conditional expectation and the integrals yields:
+\[
+	\sigma_k^2 = \frac{1}{h^2} \int_{t_k}^{t_{k+1}} \int_{t_k}^{t_{k+1}}
+		\mathrm{Cov} \left( W_u, W_v \mid \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right) du dv 
+\]
+
+\noindent Then, by symmetry of the covariance, we have:
 \begin{align*}
-	\sigma_k^2 &= \mathbb E \left[ \left( \frac{1}{h}
-		\int_{t_k}^{t_{k+1}} W_u du \right)^2 \ \Big\vert \ \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right]
-		- \mathbb E \left[ \frac{1}{h} \int_{t_k}^{t_{k+1}} W_u du \ \Big\vert \ \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right]^2
-		\\
-	&= \frac{1}{h^2} \int_{t_k}^{t_{k+1}} \int_{t_k}^{t_{k+1}}
-		\mathrm{Cov} \left( W_u W_v \mid \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right) du dv \\
-	&= \frac{1}{h^2} \int_{t_k}^{t_{k+1}} \int_{t_k}^{t_{k+1}} \frac{(t_{k+1} - u)(v - t_k)}{t_{k+1} - t_k} du dv \\
-	&= \frac{1}{h^3} \left( \int_{0}^{h} v dv \right)^2 \\
-	&= \frac{h}{4}
+	\sigma_k^2 &= \frac{2}{h^2} \int_{t_k}^{t_{k+1}} \left( \int_{t_k}^{v}
+		\mathrm{Cov} \left( W_u, W_v \mid \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right) du \right) dv 
+	 \\
+	&= \frac{2}{h^2} \int_{t_k}^{t_{k+1}} \left( \int_{t_k}^{v} \frac{(t_{k+1} - v)(u - t_k)}{t_{k+1} - t_k} du \right) dv \\
+	&= \frac{1}{h^2} \int_{0}^{h} \frac{h - v}{h} \left( \int_{0}^{v} 2u du \right) dv \\
+	&= \frac{1}{h^3} \int_{0}^{h} (h - v) v^2 dv \\
+	&= \frac{h}{12}
 \end{align*}
 
 The above finally yields the following scheme:
@@ -201,7 +205,7 @@ The above finally yields the following scheme:
 \end{equation}
 
 Considering the value of $\mu_k$, one can note this scheme is the same as the previous one except the fact
-that (3) adds a random term with distribution $\mathcal N(0, \frac{h}{4})$ in the multiplicative factor.
+that (3) adds a random term with distribution $\mathcal N(0, \frac{h}{12})$ in the multiplicative factor.
 To put it differently, in comparison with (3), (2) approximates $\bar I_k^m$ by its mean.
 
 \
@@ -339,6 +343,11 @@ to adapt the estimates of $Z$ too.
 \end{equation}
 
 It yields two new schemes.
+
+\subsection{A possible step further}
+
+Adapt to other diffusion processes. \textbf{To be completed}. However, it is not straight-forward to adapt the
+variance reduction technique.
 
 \section{PDE approaches}
 
