@@ -167,8 +167,9 @@ Furthermore, the remaining integral of the increment of the Brownian Motion is a
 compute its expectation and variance conditionally to the trajectory since the integrand follows a Brownian Bridge.
 Thus, we can indeed simulate it as stated above. In the following, we note:
 \[
-	\bar I_k^m := \frac{1}{h}
+	\bar I_k^m := \left( \frac{1}{h}
 	\int_{t_k}^{t_{k+1}} \left( W_u - W_{t_k} \right) du \ \Big\vert \ \bar W_0^m, \bar W_{t_1}^m, \dots, \bar W_T^m
+	\right)
 \]
 
 In short, $\bar I_k^m \sim \mathcal N(\mu_k, \sigma_k^2)$ with the following parameters:
@@ -354,16 +355,20 @@ As we did with scheme $(1)$, we can plug the estimates of schemes $(2)$ and $(3)
 to adapt the estimates of $Z$ too.
 \begin{equation}
 	\bar Z^{e, m} = e^{-rT} \left[ S_0 \exp \left\{ \left( r - \frac{\sigma^2}{2} \right) \frac{T}{2} +
-		\frac{\sigma}{n} \sum_{i=0}^{n-1} \frac{\bar W_{t_{k+1}}^m + \bar W_{t_k}^m}{2} \right\} - K \right]_+
+		\frac{\sigma}{m} \sum_{i=0}^{m-1} \frac{\bar W_{t_{k+1}}^m + \bar W_{t_k}^m}{2} \right\} - K \right]_+
 	\tag{$ii$}
 \end{equation}
 \begin{equation}
 	\bar Z^{p, m} = e^{-rT} \left[ S_0 \exp \left\{ \left( r - \frac{\sigma^2}{2} \right) \frac{T}{2} +
-		\frac{\sigma}{n} \sum_{i=0}^{n-1}
-		\int_{t_k}^{t_{k+1}} \left( \bar W_u^m - \bar W_{t_k}^m \right) du
-		\right\} - K \right]_+
+		\frac{\sigma}{m} \sum_{i=0}^{m-1} \bar J_k^m \right\} - K \right]_+
 	\tag{$iii$}
 \end{equation}
+
+With (provided the same computations as for $\bar I_k^m$):
+\[
+	\bar J_k^m := \left( \frac{1}{h} \int_{t_k}^{t_{k+1}} \bar W_u du \ \Big\vert \ \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right)
+	\sim \mathcal N \left( \frac{\bar W_{t_{k+1}}^m + \bar W_{t_k}^m}{2}, \frac{h}{12} \right)
+\]
 
 It yields two new schemes.
 
