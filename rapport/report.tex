@@ -22,6 +22,21 @@
 
 \setlength\parindent{0pt}
 
+\usepackage{mathtools}
+\newcommand{\expect}{\operatorname{E}\expectarg}
+\DeclarePairedDelimiterX{\expectarg}[1]{[}{]}{%
+  \ifnum\currentgrouptype=16 \else\begingroup\fi
+  \activatebar#1
+  \ifnum\currentgrouptype=16 \else\endgroup\fi
+}
+
+\newcommand{\innermid}{\nonscript\;\delimsize\vert\nonscript\;}
+\newcommand{\activatebar}{%
+  \begingroup\lccode`\~=`\|
+  \lowercase{\endgroup\let~}\innermid 
+  \mathcode`|=\string"8000
+}
+
 \title{Asian options pricing}
 \author{David Castro \qquad Maxime Leroy}
 \date{15 Januray 2024}
@@ -361,17 +376,17 @@ Thus, we have the analytical expression. We finally need to provide a way to sim
 in each scenario. We define:
 
 \begin{equation}
-	\bar Z^{e, m} = e^{-rT} \left[ S_0 \exp \left\{ \left( r - \frac{\sigma^2}{2} \right) \frac{T}{2} +
+	\bar Z^{r, m} = e^{-rT} \left[ S_0 \exp \left\{ \left( r - \frac{\sigma^2}{2} \right) \frac{T}{2} +
 		\frac{\sigma}{m} \sum_{i=0}^{m-1} \bar W_{t_k}^m \right\} - K \right]_+
 	\tag{$i$}
 \end{equation}
 
-Plugging $\bar A_T^{e, m}$ from scheme $(1)$ and $\bar Z_T^{e, m}$ in $(\ast)$ yields a new estimator:
+Plugging $\bar A_T^{r, m}$ from scheme $(1)$ and $\bar Z_T^{r, m}$ in $(\ast)$ yields a new estimator:
 \begin{equation}
-	e^{-rT} \left[ \bar A_T^{e, m} - K \right]_+ + \hat\beta_r \left( \bar Z_T^{e, m} - \mathbb E [Z] \right)
+	e^{-rT} \left[ \bar A_T^{r, m} - K \right]_+ + \hat\beta_r \left( \bar Z_T^{r, m} - \mathbb E [Z] \right)
 	\tag{4}
 \end{equation}
-where $\hat\beta_e$ is estimated with the empirical covariance of the variables.
+where $\hat\beta_r$ is estimated with the empirical covariance of the variables.
 
 \begin{figure}[H]
   \hspace*{-0.1\linewidth}\includegraphics[width=1.1\textwidth]{charts/cvgce_control.png}
@@ -443,6 +458,312 @@ Unfortunately, it is not straight-forward to adapt the variance reduction techni
 Black-Scholes model and consequently, the closed-form solution of an integral.
 
 \section{PDE approaches}
+
+\subsection{Mathematical background}
+
+In the general case, it is possible to evaluate the price of an option if it satisfies a PDE.
+Therefore, finding the price of the option is equivalent to solving a PDE.
+To start with, we introduce the mathematical background and a well-chosen transformation as developed 
+in \cite{Rogers} that satisfies a simple PDE.
+As usual when it comes to pricing an option based on PDE's model, we define
+
+\begin{equation}
+	\phi(t,x) = \mathbb E \left[ \left[ \int_{t}^{T} \frac{S_{t}}{T}\,dt-x \right]_{+} \ \big\vert \ S_{t}=1 \right]
+	\tag{I}
+\end{equation}
+
+The goal is to find a PDE satisfied by $\phi$. Let us define $M$ a well-chosen martingale.
+Using It\^o's forumla:
+
+\begin{align*}
+        M_{t} &= \mathbb E \left[ \left[ \int_{0}^{T} \frac{S_{u}}{T}\,du-K \right]_{+} \ \Big\vert \ F_{t} \right] \\
+        M_{t} &= \mathbb E \left[ \left[ \int_{t}^{T} \frac{S_{u}}{T}\,du+\int_{0}^{t} \frac{S_{u}}{T}\,du-K \right]_{+}
+        	 \ \Big\vert \ F_{t} \right]  \\
+        M_{t} &= S_{t} \mathbb E \left[ \left[ \int_{t}^{T} \frac{S_{u}}
+        {TS_{t}}\,du -\frac{K-\int_{0}^{t} \frac{S_{u}}{T}\,du}{S_{t}} \right]_{+} \ \Big\vert \ F_{t} \right] \\
+        M_{t} &= S_{t}\phi(t,\zeta_{t})
+\end{align*}
+
+Where
+\[
+	\zeta_{t} := \frac{K-\int_{0}^{t} \frac{S_{u}}{T}\,du}{S_{t}}
+\]
+
+Then, differentiating with respect to It\^o's formula and using the fact that $M_{t}$ is a martingale,
+the following term in $dt$ must vanish:
+
+\begin{equation}
+	dM={c}{{S\left[r\phi+\dot{\phi}-\left(\rho_{t}+r\xi\right)\phi^{\prime}
+	+\frac{1}{2}\sigma^{2}\xi^{2}\phi^{\prime\prime}\right]}}dt +...dW_t
+	\tag{II}
+\end{equation}
+
+Then writing $f$ the discounted value of the price $\phi$ such that $f(x,t)=\exp(-r(T-t))\phi(x,t)$ \\
+and replacing $f$ in (II) gives a simple PDE for $f$:
+
+\begin{equation}
+	\dot{f} + Gf=0
+	\tag{PDE}
+\end{equation}
+
+With $G$ the operator such that
+$G\equiv\frac{1}{2}\sigma^{2}x^{2}\frac{\partial^{2}}{\partial x^{2}}-(\rho_{t}+r x)\frac{\partial}{\partial x}$.
+\\
+
+It is also important to get the boundary conditions at time $T$. The initial definition of $\phi$ from (I)
+in which the integral vanishes at time $t=T$ provides:
+\[
+	f(T,x)=(-x)_{+} 
+\]
+
+The previous transformation was useful because it helped finding a simple PDE for $f$.
+What is more, the price of the Asian option with a fixed strike $K$ is given by:
+\[
+ 	e^{-r T} \mathbb E \left[ \left[ \int_{0}^{T} \left( S_{u}-K \right) \frac{du}{T} \right]^{+} \right]
+	=S_{0} f \left( 0, K S_{0}^{-1} \right) \equiv e^{-r T} S_{0} \phi \left( 0, K S_{0}^{-1} \right)
+\]
+
+Hence, solving the PDE and obtaining the values of $f$ at time $t=0$ allows to estimate the price of the option.
+It is possible to solve numerically this linear equation with a classic finite difference method. 
+
+\subsection{Solving the PDE}
+
+In this section, we solve the following PDE thanks to numerical finite difference method:
+
+\[
+	\begin{cases}
+		\dot{f} + Gf = 0 \\
+		f(T,x)=(-x)_{+}
+	\end{cases}
+	\quad \text{with} \qquad
+	G \equiv \frac{1}{2}\sigma^{2}x^{2}\frac{\partial^{2}}{\partial x^{2}}-(\rho_{t}+r x)\frac{\partial}{\partial x}
+\]
+
+To compute the price, we use an explicit scheme:
+\[
+	\frac{u_{i}^{n+1} -u_{i}^{n}}{h} \approx \frac{d}{dt} u(t_n,x_i)\approx -Gu^{n}
+\]
+
+\subsection*{Parameters used}
+
+Some parameters are fixed during each simulation:
+
+\begin{itemize}[label=$\cdot$]
+    \item $\sigma\in{0.15;0.25}$ the volatility is taken constant
+    \item $r=0.03$ the interest rate is constant 
+    \item $T=1$ the maturity
+    \item $x\in[-5;5]$ 
+\end{itemize}
+
+The space and the time are discretized with  space step $\delta \approx 2.10^{-3}$ and time step $h \approx 10^{-3}$.
+The space step should not be too small with respect to time otherwise it could lead to some instabilities or unsatisfactory
+results. Intuitively as the initial conditions at $t=T$ vanishes (ie: $\phi(T,x) = 0$ for $x > 0$),
+the operator $G$ (proportional to the derivatives of $f$) takes higher number of time iterations $t_i$
+to reach and impact $\phi(t_i,.)$ on the whole positive domain $x>0$.
+\\
+
+The results as shown in Figure 4 are satisfactory in the sense that they are consistent with what we obtained
+with the Monte Carlo approaches. 
+\begin{figure}[h]
+  \centering
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{charts/Price_alone15.png}
+  
+  \end{minipage}\hfill
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{charts/Price_alone_25.png}
+    
+  \end{minipage}
+  \caption{Price curves with respect to the strike with the PDE approach}
+\end{figure}
+
+\section{Lower and upper bounds for the computed price}
+
+Computing numerically a price is not enough to have a correct estimation. It is also important to tackle the errors
+due to the numerical method and thus to find bounds to be able to judge the reliability of the result.
+In that case, we look for a lower bound for the price that we can establish theoretically and then compute it.
+Once more, the main ideas of this section were already developed in \cite{Rogers}.
+
+\subsection{Theoretical approach}
+Let $\operatorname{\mathbb{E}}[Y^{+}]$ denotes the price of the Asian option that we want to bound. For any centered Gaussian variable $Z$, we get:
+\begin{equation}
+\operatorname{\mathbb{E}}[Y^{+}]=\operatorname{\mathbb{E}}[\operatorname{\mathbb{E}}[Y^{+}\mid Z]]\geq\operatorname{\mathbb{E}}\left[\operatorname{\mathbb{E}}[Y\mid Z]^{+}\right]
+\tag{III}
+\end{equation}
+ 
+What is more, for any random variable $U$:
+
+ \begin{equation}
+    \begin{aligned}
+    &0\leq \mathbb{E}[U^{+}]-\mathbb{E}[U]^{+} \\ 
+    &{{\leq\,\frac{1}{2}(\mathbb{E}[|U|]-\,|\mathbb{E}[U]|)}}\\ 
+    &{{\leq\,\frac{1}{2}\mathrm{var}[U]^{1/2}.}}
+    \end{aligned}
+    \tag{IV}
+ \end{equation}
+ Hence combining (III) and (IV) provides a framework for the price:
+
+\[
+\mathbb{E}[\mathbb{E}[Y\mid Z]^{+}]\leq \mathbb{E}[Y^{+}] \leq \mathbb{E}[\mathbb{E}[Y\mid Z]^{+}] + \frac{1}{2}\mathbb{E}[\mathrm{Var}[Y^{+}\mid Z]^{1/2}]
+\]
+
+The purpose of this inequality is to find a well-chosen $Z$ which minimizes $\mathbb{E}[\mathrm{Var}[Y^{+}\mid Z]^{1/2}]$ to frame the price at best. We are looking for a normally distributed variable so that:
+\begin{align*}
+  &\mathbb{E}[B_t\mid Z]=m_{t}Z\\
+  &\mathrm{Cov}(B_s,B_t\mid Z)=v_{st} 
+\end{align*}
+
+As in the numerical tests, we choose $T=1$. That explains the bounds of the following integrals.
+The goal is now to compute $\mathrm{Var}[Y^{+}\mid Z]^{1/2}$.
+As a first step, we should compute the mean of $Y^{+} \mid Z$.
+Quoting the article, \textit{it turns out that choosing the following definition of $Z$ is by far the best choice}.
+\[
+   	Z := TA_T = \int_{0}^{T} S_{t} \,dt 
+\]
+
+Adopting this definition yields:
+\[
+\mathbb{E}[Y\mid Z]=\mathbb{E}\left[\int_{0}^{1}\exp(\sigma B_{t}-{\textstyle\frac{1}{2}}\sigma^{2}t+r t)\,dt
+\ \Big\vert \ Z \right]=\int_{0}^{1}\exp(\sigma tZ-{\textstyle\frac{1}{2}}\sigma^{2}v m_{t}^{2}+r t)dt
+\]
+
+Where $v=Var(Z)$. After some calculations:
+\[
+\mathrm{Var}[Y\mid Z]=\int_{0}^{1}d s\int_{0}^{1}\exp(\sigma Z(m_{s}+m_{t})-{\textstyle{\frac{1}{2}}}\sigma^{2}v(m_{s}^{2}+m_{t}^{2})+r(s+t))(e^{\sigma^{2}v_{s t}}-1)d t
+\]
+
+For common values of $\sigma$ (usually $\in[0.03;0.6]$) and provided that for $s,t \in [0,1]$:
+\[
+	| v_{st} | = | \mathrm{Cov} (B_s,B_t\mid Z)| \leq \mathrm{Var}(B_s)^{\frac{1}{2}} Var(B_t)^{\frac{1}{2}}\leq 1
+\]
+we can simplify the above expression using $e^{\sigma^{2}v_{s t}}-1\approx \sigma^{2}v_{s t}$\\
+\\
+This approximation is then used to approximate the integral giving $\mathrm{Var}[Y\mid Z]$.
+As a result, we define the approximate integral $V$:
+\begin{align*}
+	V &\approx \int_{0}^{1} ds\int_{0}^{1}(1+\sigma Z(m_{s}+m_{t})-{\textstyle\frac{1}{2}}
+	\sigma^{2}v(m_{s}^{2}+m_{t}^{2})	+r(s+t))\sigma^{2}v_{s t}d t \\
+	&=\int_{0}^{1}ds\int_{0}^{1} (1+f(s,Z)+f(t,Z))v_{s t}dt
+\end{align*}
+where $f(t,Z)=\textstyle\frac{1}{2}\sigma^{2}v(m_{t}^{2}+rt)\sigma^{2}$.
+\\
+
+The noticeable thing about this integral is to observe that it vanishes when $Z=\int_{0}^{1}B_u du$\\
+Indeed, by bilinearity of the covariance:\\
+\begin{equation}
+    \int_{0}^{1}v_{st}ds=\int_{0}^{1}cov(B_s,B_t\mid Z)ds=cov(\int_{0}^{1}B_s ds,B_t\mid Z)=cov(Z,B_t\mid Z)=0
+\end{equation}
+As a consequence, we just found an ideal candidate for $Z$ : assuming that the initial integral $\mathrm{Var}[Y\mid Z]$ is close to $V$, vanishing $V$ implies reducing significantly $\mathrm{Var}[Y\mid Z]$.\\
+With $Z$ vanishing $V$:
+\begin{equation}
+  \mathrm{Var}[Y\mid Z]= \mathrm{Var}[Y\mid Z]-V\leq A+B 
+\end{equation}
+Where 
+\begin{equation}
+    \begin{aligned}
+    &A=\int_{0}^{1}d s\int_{0}^{1}\ (e^{f(s,Z)+f(t,Z)}-1-f(s,Z)-f(t,Z)).|e^{\sigma^{2}v_{s t}}-1|d t\\
+    &B=\int_{0}^{1}d s\int_{0}^{1}(e^{\sigma^{2}v_{s t}}-1-\sigma^{2}v_{s t}).|1+f(s,Z)+f(t,Z)|d t
+    \end{aligned}
+\end{equation}
+After some computations detailed in [3], we finally get
+\begin{equation}
+    \mathbb{E}[\mathrm{Var}[Y^{+}\mid Z]^{1/2}] \leq \frac{1}{2}\Biggl[c\sigma^{2}e^{c\sigma^{2}+\gamma_{2}}\biggl[\frac{1}{2}\sigma^{2}\gamma_{1}v e^{{\frac{1}{2}}\sigma^{2}\gamma_{1}v}+{\textstyle{\frac{1}{2}}}\gamma_{2}^{2}\biggr]+{\textstyle{\frac{1}{2}}}\sigma^{4}c^{2}e^{\sigma^{4}c^{2}}(1+\gamma_{2})\Biggr]^{1/2}
+\end{equation}
+Where 
+\begin{equation}
+    |v_{s t}|\leq c,\ \ \ (m_{s}+m_{t})^{2}\leq\gamma_{1},\ \ \ |g_{s}+g_{t}|\leq\gamma_{2} ,\ \ \ 
+    g_s\equiv r s-\textstyle{\frac{1}{2}}\sigma^{2}v m_{s}
+\end{equation}
+It is then necessary to find optimal parameters minimizing the right-term of (18). \\
+As $Z=\int_{0}^{1}B_u du$, we deduce that $v=\frac{1}{4}$.
+
+\subsection{Computation of the theoretical bounds}
+
+Thanks to the preceding part, we should be able to compute a lower and upper bounds. 
+
+Indeed, for a strike $K$, the price $\mathbb{E}[(Y-K)_{+}]$ is framed by by:
+\begin{equation}
+    \mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]\leq \mathbb{E}[(Y-K)_{+}] \leq  \mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]+Var[Y\mid Z]^{1/2} \leq \mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]+A+B 
+\end{equation}
+With $A+B$ majored in (18).\\
+We first need to compute the lower bound
+\subsection{Computing the lower bound}
+In this part, we compute $\mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]$ with $Z=\int_{0}^{1}B_u du$ and $Z \sim \mathcal{N}(0,\frac{1}{3})$.\\
+To start with\\
+
+\begin{equation}
+ \begin{aligned}
+     &\mathbb{E}[(Y-K)\mid Z]=\phi(Z) \\
+     &With:\\
+     &\mathbb{E}[(Y-K)\mid Z=z]=\phi(z)
+ \end{aligned}
+\end{equation}
+Then, using (12) we find:
+
+\begin{equation}
+\phi(z)=-K+\int_{0}^{1}\exp(\sigma tz-{\textstyle\frac{1}{2}}\sigma^{2}v m_{t}^{2}+r t)dt
+\end{equation}
+And taking into account the density of Z $f_Z(x)=\frac{3}{\sqrt{2\pi}} \cdot e^{-\frac{9x^2}{2}}$\\
+We finally find:\\
+\begin{equation}
+\mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]=\int_{-\infty}^{+\infty}\phi_{K}(x)_{+}f_Z(x)dx
+\end{equation}
+This last integral can easily be estimated with the python scipy module.
+
+\subsection{Computing the upper bound}
+
+In fact, computing the upper bound is quite simple as we only need to add to the lower bound this quantity:\\
+$\frac{1}{2}\Biggl[c\sigma^{2}e^{c\sigma^{2}+\gamma_{2}}\biggl[\frac{1}{2}\sigma^{2}\gamma_{1}v e^{{\frac{1}{2}}\sigma^{2}\gamma_{1}v}+{\textstyle{\frac{1}{2}}}\gamma_{2}^{2}\biggr]+{\textstyle{\frac{1}{2}}}\sigma^{4}c^{2}e^{\sigma^{4}c^{2}}(1+\gamma_{2})\Biggr]^{1/2}$\\
+\\
+With well-chosen parameters satisfying (19):\\
+\begin{equation}
+    c=\frac{1}{3}\ \ \ 
+    \gamma_{1}=9\ \ \ 
+    \gamma_{2}=r+\frac{\sigma^{2}}{4} 
+\end{equation}
+
+We finally get really convincing results close to the PDE solution computed previously.\\ 
+Notice that the bounds are not supposed to directly frame the PDE solution computed but only the price in the general case. However, we could estimate an upper bound of the relative error conveyed by the PDE solution thanks to these bounds. \\
+\begin{figure}[h]
+  \centering
+  \begin{minipage}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{charts/Pric_bounds15.png}
+    
+  \end{minipage}\hfill
+  \begin{minipage}{0.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{charts/Price_bounds25.png}
+   
+  \end{minipage}
+\end{figure}
+\section{Convergence analysis}
+The Monte-Carlo course (section 2.3 of chapter 7) gives an easy way to check theoretically the convergence of an explicit scheme (case $\theta=0$). Hence, assuming there exists a smooth solution to the PDE, if
+\begin{equation}
+    |b(x_i)|\delta\leq \sigma^{2}(x_i), \\\
+    \sigma^{2}(x_i)h\leq \delta^{2}
+\end{equation}
+Where $\delta$ is the space step and $h$ is the time step.\\
+Then the scheme is convergent for the $L_\infty $ norm.\\
+In our practical cases, this last equation is equivalent to these inequalities:
+\begin{equation}
+    \begin{aligned}
+        &0\leq \frac{\sigma^{2}x_i^{2}}{2}-|\rho_t+rx_i|\delta, \\
+        &0\leq \delta^{2}- \frac{\sigma^{2}x_i^{2}}{2}h
+    \end{aligned}
+\end{equation}
+Here, $\delta \approx 2.10^{-3}$ and $h \approx 10^{-3}$.\\
+We plot these inequalities for two values of $\sigma$.  We could also play with the step parameters $\delta$ and $h$ to ensure that these two functions remains positive.
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{charts/Ineq.png}
+\end{figure}
+\subsection{Critics of the convergence proof }
+Graphically, the results are not really convincing, however the inequalities are in both cases almost verified in the whole domain and it is enough for us to observe convergence.\\
+Moreover, we observe that issues of convergence could especially occur around 0, while inequalities seem to be verified on the edges.\\ 
+It would be also possible to study more in detail the stability and the consistency of the explicit scheme used to give better arguments to justify the convergence for a wide range of  parameters.\\
 
 \section*{Conclusion}
 
