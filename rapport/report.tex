@@ -457,7 +457,7 @@ This is a very important aspect in order to better model the actual stock market
 Unfortunately, it is not straight-forward to adapt the variance reduction technique as it strongly relies on
 Black-Scholes model and consequently, the closed-form solution of an integral.
 
-\section{PDE approaches}
+\section{PDE approach}
 
 \subsection{Mathematical background}
 
@@ -498,7 +498,7 @@ the following term in $dt$ must vanish:
 	\tag{II}
 \end{equation}
 
-Then writing $f$ the discounted value of the price $\phi$ such that $f(x,t)=\exp(-r(T-t))\phi(x,t)$ \\
+Then writing $f$ the discounted value of the price $\phi$ such that $f(x,t)=\exp(-r(T-t))\phi(t, x)$ \\
 and replacing $f$ in (II) gives a simple PDE for $f$:
 
 \begin{equation}
@@ -562,7 +562,7 @@ the operator $G$ (proportional to the derivatives of $f$) takes higher number of
 to reach and impact $\phi(t_i,.)$ on the whole positive domain $x>0$.
 \\
 
-The results as shown in Figure 4 are satisfactory in the sense that they are consistent with what we obtained
+The results as shown in Figure 4 are satisfactory in the sense that they seem consistent with what we obtained
 with the Monte Carlo approaches. 
 \begin{figure}[h]
   \centering
@@ -579,68 +579,98 @@ with the Monte Carlo approaches.
   \caption{Price curves with respect to the strike with the PDE approach}
 \end{figure}
 
+\subsection{Convergence analysis}
+
+The Monte-Carlo course (section 2.3 of chapter 7) gives an easy way to check theoretically the convergence of
+an explicit scheme (case $\theta=0$). Hence, assuming there exists a smooth solution to the PDE,
+the scheme is convergent for the $L_\infty $ norm if
+\[
+    |b(x_i)|\delta\leqslant \sigma^{2}(x_i), \quad
+    \sigma^{2}(x_i)h\leqslant \delta^{2}
+\]
+Where $\delta$ is the space step and $h$ is the time step.
+In our case, this is equivalent to the following inequalities:
+\begin{align*}
+        0 &\leqslant \frac{\sigma^{2}x_i^{2}}{2}-|\rho_t+rx_i|\delta, \\
+        0 &\leqslant \delta^{2}- \frac{\sigma^{2}x_i^{2}}{2}h
+\end{align*}
+Here, $\delta \approx 2.10^{-3}$ and $h \approx 10^{-3}$. We plot these inequalities in Figure 5. 
+We could also play with the step parameters $\delta$ and $h$ to ensure that these two functions remains positive.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.9\textwidth]{charts/Ineq.png}
+  \caption{Inequalities ensuring convergence of the scheme for $\sigma = 25\%$ and $r = 3\%$}
+\end{figure}
+
+Graphically, the results are not really convincing, however the inequalities are in both
+cases almost verified in the whole domain and it is enough for us to observe convergence.
+Moreover, we observe that issues of convergence could especially occur around 0,
+while inequalities seem to be verified on the edges.
+It would be also possible to study more in detail the stability and the consistency
+of the explicit scheme used to give better arguments to justify the convergence for a wide range of  parameters.
+
 \section{Lower and upper bounds for the computed price}
 
 Computing numerically a price is not enough to have a correct estimation. It is also important to tackle the errors
 due to the numerical method and thus to find bounds to be able to judge the reliability of the result.
 In that case, we look for a lower bound for the price that we can establish theoretically and then compute it.
-Once more, the main ideas of this section were already developed in \cite{Rogers}.
+Once more, the main ideas of this section were developed in \cite{Rogers}.
+As in the numerical tests, we choose $T=1$ and define $Y := A_1 - K = \int_0^1 S_u du - K$ to simplify the notations.
 
 \subsection{Theoretical approach}
-Let $\operatorname{\mathbb{E}}[Y^{+}]$ denotes the price of the Asian option that we want to bound. For any centered Gaussian variable $Z$, we get:
+Let $e^{-r} \operatorname{\mathbb{E}}[Y_{+}]$ denote the price of the Asian option that we want to bound.
+For any centered Gaussian variable $Z$, we get:
 \begin{equation}
-\operatorname{\mathbb{E}}[Y^{+}]=\operatorname{\mathbb{E}}[\operatorname{\mathbb{E}}[Y^{+}\mid Z]]\geq\operatorname{\mathbb{E}}\left[\operatorname{\mathbb{E}}[Y\mid Z]^{+}\right]
+\operatorname{\mathbb{E}}[Y_{+}]=\operatorname{\mathbb{E}}[\operatorname{\mathbb{E}}[Y_{+}\mid Z]]\geqslant\operatorname{\mathbb{E}}\left[\operatorname{\mathbb{E}}[Y\mid Z]_{+}\right]
 \tag{III}
 \end{equation}
  
+Note the inequality used here is the same as the approximation (S) used in the Monte-Carlo scheme (2).
 What is more, for any random variable $U$:
 
  \begin{equation}
     \begin{aligned}
-    &0\leq \mathbb{E}[U^{+}]-\mathbb{E}[U]^{+} \\ 
-    &{{\leq\,\frac{1}{2}(\mathbb{E}[|U|]-\,|\mathbb{E}[U]|)}}\\ 
-    &{{\leq\,\frac{1}{2}\mathrm{var}[U]^{1/2}.}}
+    0 &\leqslant \mathbb{E}[U_{+}]-\mathbb{E}[U]_{+} \\ 
+    &{{\leqslant\,\frac{1}{2} \left( \mathbb{E}[|U|]-\,|\mathbb{E}[U]| \right)}}\\ 
+    &{{\leqslant\,\frac{1}{2}\mathrm{var}[U]^{1/2}}}
     \end{aligned}
     \tag{IV}
  \end{equation}
  Hence combining (III) and (IV) provides a framework for the price:
 
 \[
-\mathbb{E}[\mathbb{E}[Y\mid Z]^{+}]\leq \mathbb{E}[Y^{+}] \leq \mathbb{E}[\mathbb{E}[Y\mid Z]^{+}] + \frac{1}{2}\mathbb{E}[\mathrm{Var}[Y^{+}\mid Z]^{1/2}]
+	\mathbb{E}[\mathbb{E}[Y\mid Z]_{+}]\leq \mathbb{E}[Y_{+}]
+	\leqslant \mathbb{E}[\mathbb{E}[Y\mid Z]_{+}] + \frac{1}{2}\mathbb{E}[\mathrm{Var}[Y\mid Z]^{1/2}]
 \]
 
-The purpose of this inequality is to find a well-chosen $Z$ which minimizes $\mathbb{E}[\mathrm{Var}[Y^{+}\mid Z]^{1/2}]$ to frame the price at best. We are looking for a normally distributed variable so that:
+The purpose of this inequality is to find a well-chosen $Z$ which minimizes
+$\mathbb{E}[\mathrm{Var}[Y\mid Z]^{1/2}]$ to frame the price at best.
+We are looking for a Gaussian variable with zero-mean so that:
 \begin{align*}
-  &\mathbb{E}[B_t\mid Z]=m_{t}Z\\
-  &\mathrm{Cov}(B_s,B_t\mid Z)=v_{st} 
+  \mathbb{E}[W_t\mid Z] &= m_{t}Z\\
+  \mathrm{Cov}(W_s,W_t\mid Z) &= v_{st} 
 \end{align*}
 
-As in the numerical tests, we choose $T=1$. That explains the bounds of the following integrals.
-The goal is now to compute $\mathrm{Var}[Y^{+}\mid Z]^{1/2}$.
-As a first step, we should compute the mean of $Y^{+} \mid Z$.
-Quoting the article, \textit{it turns out that choosing the following definition of $Z$ is by far the best choice}.
-\[
-   	Z := TA_T = \int_{0}^{T} S_{t} \,dt 
-\]
+The goal is now to compute $\mathrm{Var}[Y\mid Z]^{1/2}$.
+As a first step, we should compute the mean of $Y \mid Z$. The above yields:
+\begin{equation}
+\mathbb{E}[Y\mid Z]=\mathbb{E}\left[\int_{0}^{1} e^{\sigma W_{t}-{\textstyle\frac{1}{2}}\sigma^{2}t+r t}\,dt
+\ \Big\vert \ Z \right]=\int_{0}^{1} e^{\sigma m_t Z-{\textstyle\frac{1}{2}}\sigma^{2}v m_{t}^{2}+r t}dt
+\tag{V}
+\end{equation}
 
-Adopting this definition yields:
-\[
-\mathbb{E}[Y\mid Z]=\mathbb{E}\left[\int_{0}^{1}\exp(\sigma B_{t}-{\textstyle\frac{1}{2}}\sigma^{2}t+r t)\,dt
-\ \Big\vert \ Z \right]=\int_{0}^{1}\exp(\sigma tZ-{\textstyle\frac{1}{2}}\sigma^{2}v m_{t}^{2}+r t)dt
-\]
-
-Where $v=Var(Z)$. After some calculations:
+Where $v=\mathrm{Var}(Z)$. After some calculations:
 \[
 \mathrm{Var}[Y\mid Z]=\int_{0}^{1}d s\int_{0}^{1}\exp(\sigma Z(m_{s}+m_{t})-{\textstyle{\frac{1}{2}}}\sigma^{2}v(m_{s}^{2}+m_{t}^{2})+r(s+t))(e^{\sigma^{2}v_{s t}}-1)d t
 \]
 
 For common values of $\sigma$ (usually $\in[0.03;0.6]$) and provided that for $s,t \in [0,1]$:
 \[
-	| v_{st} | = | \mathrm{Cov} (B_s,B_t\mid Z)| \leq \mathrm{Var}(B_s)^{\frac{1}{2}} Var(B_t)^{\frac{1}{2}}\leq 1
+	| v_{st} | = | \mathrm{Cov} (W_s,W_t\mid Z)| \leq \mathrm{Var}(W_s)^{\frac{1}{2}} Var(W_t)^{\frac{1}{2}}\leq 1
 \]
-we can simplify the above expression using $e^{\sigma^{2}v_{s t}}-1\approx \sigma^{2}v_{s t}$\\
-\\
-This approximation is then used to approximate the integral giving $\mathrm{Var}[Y\mid Z]$.
+we can simplify the above expression using $e^{\sigma^{2}v_{s t}}-1\approx \sigma^{2}v_{s t}$.
+This approximation is then used to simplify the integral giving $\mathrm{Var}[Y\mid Z]$.
 As a result, we define the approximate integral $V$:
 \begin{align*}
 	V &\approx \int_{0}^{1} ds\int_{0}^{1}(1+\sigma Z(m_{s}+m_{t})-{\textstyle\frac{1}{2}}
@@ -650,87 +680,110 @@ As a result, we define the approximate integral $V$:
 where $f(t,Z)=\textstyle\frac{1}{2}\sigma^{2}v(m_{t}^{2}+rt)\sigma^{2}$.
 \\
 
-The noticeable thing about this integral is to observe that it vanishes when $Z=\int_{0}^{1}B_u du$\\
+What is remarkable about this integral is that it vanishes when we define $Z := \int_{0}^{1}W_u du$.
 Indeed, by bilinearity of the covariance:\\
-\begin{equation}
-    \int_{0}^{1}v_{st}ds=\int_{0}^{1}cov(B_s,B_t\mid Z)ds=cov(\int_{0}^{1}B_s ds,B_t\mid Z)=cov(Z,B_t\mid Z)=0
-\end{equation}
-As a consequence, we just found an ideal candidate for $Z$ : assuming that the initial integral $\mathrm{Var}[Y\mid Z]$ is close to $V$, vanishing $V$ implies reducing significantly $\mathrm{Var}[Y\mid Z]$.\\
-With $Z$ vanishing $V$:
-\begin{equation}
+\[
+    \int_{0}^{1}v_{st}ds
+    =\int_{0}^{1}\mathrm{Cov}(W_s,W_t\mid Z)ds
+    =\mathrm{Cov} \left( \int_{0}^{1}W_s ds,W_t\mid Z \right)
+    =\mathrm{Cov}(Z,W_t\mid Z)
+    =0
+\]
+As a consequence, we just found an ideal candidate for $Z$ : assuming that the initial integral
+$\mathrm{Var}[Y\mid Z]$ is close to $V$, vanishing $V$ implies reducing significantly $\mathrm{Var}[Y\mid Z]$.
+With the above definition of $Z$:
+\[
   \mathrm{Var}[Y\mid Z]= \mathrm{Var}[Y\mid Z]-V\leq A+B 
-\end{equation}
-Where 
+\]
+
+Where:
+\begin{align*}
+    A&=\int_{0}^{1}d s\int_{0}^{1}\ (e^{f(s,Z)+f(t,Z)}-1-f(s,Z)-f(t,Z)).|e^{\sigma^{2}v_{s t}}-1|d t\\
+    B&=\int_{0}^{1}d s\int_{0}^{1}(e^{\sigma^{2}v_{s t}}-1-\sigma^{2}v_{s t}) | 1+f(s,Z)+f(t,Z) | dt
+\end{align*}
+
+After some computations detailed in \cite{Rogers}, we finally get:
 \begin{equation}
-    \begin{aligned}
-    &A=\int_{0}^{1}d s\int_{0}^{1}\ (e^{f(s,Z)+f(t,Z)}-1-f(s,Z)-f(t,Z)).|e^{\sigma^{2}v_{s t}}-1|d t\\
-    &B=\int_{0}^{1}d s\int_{0}^{1}(e^{\sigma^{2}v_{s t}}-1-\sigma^{2}v_{s t}).|1+f(s,Z)+f(t,Z)|d t
-    \end{aligned}
+    \mathbb{E}[\mathrm{Var}[Y\mid Z]^{1/2}]
+    \leq \frac{1}{2}\Biggl[
+    	c\sigma^{2}e^{c\sigma^{2}+\gamma_{2}}\biggl[
+		\frac{1}{2}\sigma^{2}\gamma_{1}v e^{{\frac{1}{2}}\sigma^{2}\gamma_{1}v}
+			+{\textstyle{\frac{1}{2}}}\gamma_{2}^{2}
+		\biggr]+{\textstyle{\frac{1}{2}}}\sigma^{4}c^{2}e^{\sigma^{4}c^{2}}(1+\gamma_{2})
+	\Biggr]^{1/2} \tag{VI}
 \end{equation}
-After some computations detailed in [3], we finally get
-\begin{equation}
-    \mathbb{E}[\mathrm{Var}[Y^{+}\mid Z]^{1/2}] \leq \frac{1}{2}\Biggl[c\sigma^{2}e^{c\sigma^{2}+\gamma_{2}}\biggl[\frac{1}{2}\sigma^{2}\gamma_{1}v e^{{\frac{1}{2}}\sigma^{2}\gamma_{1}v}+{\textstyle{\frac{1}{2}}}\gamma_{2}^{2}\biggr]+{\textstyle{\frac{1}{2}}}\sigma^{4}c^{2}e^{\sigma^{4}c^{2}}(1+\gamma_{2})\Biggr]^{1/2}
-\end{equation}
-Where 
+
+Where $c$, $\gamma_1$ and $\gamma_2$ are constants such that for all $s, t \in [0, 1]$:
 \begin{equation}
     |v_{s t}|\leq c,\ \ \ (m_{s}+m_{t})^{2}\leq\gamma_{1},\ \ \ |g_{s}+g_{t}|\leq\gamma_{2} ,\ \ \ 
     g_s\equiv r s-\textstyle{\frac{1}{2}}\sigma^{2}v m_{s}
+    \tag{VII}
 \end{equation}
-It is then necessary to find optimal parameters minimizing the right-term of (18). \\
-As $Z=\int_{0}^{1}B_u du$, we deduce that $v=\frac{1}{3}$.
+It is then necessary to find optimal parameters minimizing the right-term of (VI).
+As $Z=\int_{0}^{1}W_u du$, we deduce that $v=\frac{1}{3}$.
 
 \subsection{Computation of the theoretical bounds}
 
-Thanks to the preceding part, we should be able to compute a lower and upper bounds. 
-
-Indeed, for a strike $K$, the price $\mathbb{E}[(Y-K)_{+}]$ is framed by by:
+Thanks to the previous part, we are now able to compute a lower and upper bounds for the price of the
+fixed-strike Asian call. Indeed, the price $\mathbb{E}[Y^{+}]$ is framed by:
 \begin{equation}
-    \mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]\leq \mathbb{E}[(Y-K)_{+}] \leq  \mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]+Var[Y\mid Z]^{1/2} \leq \mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]+A+B 
+    \underbrace{\mathbb{E}[\mathbb{E}[Y\mid Z]_{+}]}_{\text{lower bound}}
+    \leqslant \mathbb{E}[Y_{+}]
+    \leqslant \underbrace{\mathbb{E}[\mathbb{E}[Y\mid Z]_{+}] +
+    	\frac{1}{2} \mathbb{E}[A+B]^{1/2}}_{\text{upper bound}}
+    \tag{VIII}
 \end{equation}
-With $A+B$ majored in (18).\\
-We first need to compute the lower bound
+
+Where the upper bound of $\mathbb E[A+B]$ itself is given in (VI).
+
 \subsection{Computing the lower bound}
-In this part, we compute $\mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]$ with $Z=\int_{0}^{1}B_u du$ and $Z \sim \mathcal{N}(0,\frac{1}{3})$.\\
-To start with\\
 
-\begin{equation}
- \begin{aligned}
-     &\mathbb{E}[(Y-K)\mid Z]=\phi(Z) \\
-     &With:\\
-     &\mathbb{E}[(Y-K)\mid Z=z]=\phi(z)
- \end{aligned}
-\end{equation}
-Then, using (12) we find:
+Let us first compute the lower bound with
+$Z=\int_{0}^{1}W_u du \sim \mathcal{N}(0,\frac{1}{3})$.
+\\
 
+Let us note $\mathbb{E}[Y\mid Z] =: \varphi(Z)$ so that $\mathbb{E}[Y\mid Z=z]=\varphi(z)$.
+Using (V) we find:
+\[
+	\varphi(z)=\int_{0}^{1}\exp(\sigma m_t z-{\textstyle\frac{1}{2}}\sigma^{2}v m_{t}^{2}+r t)dt - K
+\]
+
+Taking into account the density of Z $f_Z(x)=\sqrt{\frac{3}{2\pi}} e^{-\frac{3x^2}{2}}$, we finally find:
 \begin{equation}
-\phi(z)=-K+\int_{0}^{1}\exp(\sigma tz-{\textstyle\frac{1}{2}}\sigma^{2}v m_{t}^{2}+r t)dt
+	\mathbb{E}[\mathbb{E}[Y\mid Z]_{+}]=\int_{-\infty}^{+\infty}\phi_{K}(x)_{+}f_Z(x)dx
+	\tag{IX}
 \end{equation}
-And taking into account the density of Z $f_Z(x)=\frac{3}{\sqrt{2\pi}} \cdot e^{-\frac{3x^2}{2}}$\\
-We finally find:\\
-\begin{equation}
-\mathbb{E}[\mathbb{E}[(Y-K)\mid Z]_{+}]=\int_{-\infty}^{+\infty}\phi_{K}(x)_{+}f_Z(x)dx
-\end{equation}
-This last integral can easily be estimated with the python scipy module.
+
+The last integral can easily be estimated with the python scipy module given the expression of
+$m_t$ and $v_{st}$ we obtain with this well-chosen $Z$:
+\[
+	m_t = \frac{3}{2} t (2-t) \quad \text{and} \quad v_{st} = s \wedge t - \frac{3}{4} st (2-s)(2-t)
+\]
 
 \subsection{Computing the upper bound}
 
-In fact, computing the upper bound is quite simple as we only need to add to the lower bound this quantity:\\
-$\frac{1}{2}\Biggl[c\sigma^{2}e^{c\sigma^{2}+\gamma_{2}}\biggl[\frac{1}{2}\sigma^{2}\gamma_{1}v e^{{\frac{1}{2}}\sigma^{2}\gamma_{1}v}+{\textstyle{\frac{1}{2}}}\gamma_{2}^{2}\biggr]+{\textstyle{\frac{1}{2}}}\sigma^{4}c^{2}e^{\sigma^{4}c^{2}}(1+\gamma_{2})\Biggr]^{1/2}$\\
-\\
-With well-chosen parameters satisfying (19):\\
-\begin{equation}
-    c=\frac{1}{3}\ \ \ 
-    \gamma_{1}=9\ \ \ 
-    \gamma_{2}=r+\frac{\sigma^{2}}{4} 
-\end{equation}
+In fact, computing the upper bound is quite simple as we only need to add
+the following quantity to the lower bound:
+\[
+	\frac{1}{2}\Biggl[c\sigma^{2}e^{c\sigma^{2}+\gamma_{2}}\biggl[\frac{1}{2}\sigma^{2}\gamma_{1}v e^{{\frac{1}{2}}
+	\sigma^{2}\gamma_{1}v}+{\textstyle{\frac{1}{2}}}\gamma_{2}^{2}\biggr]+{\textstyle{\frac{1}{2}}}\sigma^{4}c^{2}
+	e^{\sigma^{4}c^{2}}(1+\gamma_{2})\Biggr]^{1/2}
+\]
 
-We finally get really convincing results close to the PDE solution computed previously.\\ 
+With well-chosen parameters satisfying (VIII):
+\[
+    c=\frac{1}{3}, \quad
+    \gamma_{1}=9, \quad
+    \gamma_{2}=r+\frac{\sigma^{2}}{4} 
+\]
+
+We finally get really convincing results close to the PDE solution computed previously.
 Notice that the bounds are not supposed to directly frame the PDE solution computed but only the price in the general case. However, we could estimate an upper bound of the relative error conveyed by the PDE solution thanks to these bounds. \\
 \begin{figure}[h]
   \centering
   \begin{minipage}{0.5\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{charts/Pric_bounds15.png}
+    \includegraphics[width=\textwidth]{charts/Price_bounds15.png}
     
   \end{minipage}\hfill
   \begin{minipage}{0.5\textwidth}
@@ -739,55 +792,48 @@ Notice that the bounds are not supposed to directly frame the PDE solution compu
    
   \end{minipage}
 \end{figure}
-\section{Convergence analysis}
-The Monte-Carlo course (section 2.3 of chapter 7) gives an easy way to check theoretically the convergence of an explicit scheme (case $\theta=0$). Hence, assuming there exists a smooth solution to the PDE, if
-\begin{equation}
-    |b(x_i)|\delta\leq \sigma^{2}(x_i), \\\
-    \sigma^{2}(x_i)h\leq \delta^{2}
-\end{equation}
-Where $\delta$ is the space step and $h$ is the time step.\\
-Then the scheme is convergent for the $L_\infty $ norm.\\
-In our practical cases, this last equation is equivalent to these inequalities:
-\begin{equation}
-    \begin{aligned}
-        &0\leq \frac{\sigma^{2}x_i^{2}}{2}-|\rho_t+rx_i|\delta, \\
-        &0\leq \delta^{2}- \frac{\sigma^{2}x_i^{2}}{2}h
-    \end{aligned}
-\end{equation}
-Here, $\delta \approx 2.10^{-3}$ and $h \approx 10^{-3}$.\\
-We plot these inequalities for two values of $\sigma$.  We could also play with the step parameters $\delta$ and $h$ to ensure that these two functions remains positive.
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.8\textwidth]{charts/Ineq.png}
-\end{figure}
-\subsection{Critics of the convergence proof }
-Graphically, the results are not really convincing, however the inequalities are in both cases almost verified in the whole domain and it is enough for us to observe convergence.\\
-Moreover, we observe that issues of convergence could especially occur around 0, while inequalities seem to be verified on the edges.\\ 
-It would be also possible to study more in detail the stability and the consistency of the explicit scheme used to give better arguments to justify the convergence for a wide range of  parameters.\\
 
 \section*{Conclusion}
+
+The following table provides a summary of the different methods we have implemented.
+The Monte-Carlo approaches were run with $n=10^5$ and
+with different values of $m$ (between $20$ and $100$ depending on the results
+presented in Figures 2 and 3). Moreover, we took $\sigma=20\%$ and $r=3\%$. It turns out that
+the most accurate methods are the Monte-Carlo approaches with control variates. The three corresponding
+algorithms yield similar results. What is more, the PDE approach has several flaws: it tends to underestimate
+the value of the
+option and does not allow to construct a confidence interval. However, it can still be useful to study in a
+computationally-effective way the behaviour of the solution for different values of the parameters and the corresponding
+sensitivities. Regarding the last technique, consisting in computing bounds for the solution, it appears to be
+the fastest method. Unfortunately, unlike the Monte-Carlo approaches with control, its accuracy is fundamentally limited
+since it does not allow to achieve a better accuracy than the one written below. Consequently, it is very useful if
+one does not seek a really high level of precision. Otherwise, the Monte-Carlo with control variates and high values
+of $n$ and $m$ should be used, requiring more processing time.
 
 \renewcommand{\arraystretch}{1.2}
 
 \begin{center}
-\begin{tabular}{m{0.25\textwidth}>{\centering}m{0.15\textwidth}>{\centering}m{0.15\textwidth}
+\begin{table}[H]
+\begin{tabular}{m{0.25\textwidth}>{\centering}m{0.08\textwidth}>{\centering}m{0.22\textwidth}
 	>{\centering\arraybackslash}m{0.3\textwidth}}
     \hline
     	\multirow{2}{*}{\textbf{Method}} &
    	\multicolumn{2}{c}{\textbf{Results}} &
 	\multirow{2}{*}{\textbf{Processing time (s)}} \\
-	\cline{2-3} & \textbf{Value} & \textbf{Interval} & \\
+	\cline{2-3} & \textbf{Value} & \textbf{Interval ($\pm$)} & \\
     \hline
-    $\text{MC}_1$ (naive) & & & \\
-    $\text{MC}_2$ (trapeze)  & & &  \\
-    $\text{MC}_3$ (conditional)  & & & \\ %\multicolumn{2}{c}{content}
-    $\text{MC}_1$ (+ control) & & & \\
-    $\text{MC}_2$ (+ control)  & & & \\
-    $\text{MC}_3$ (+ control)  & & & \\
-    PDE approach & & \textit{NA} & \\
-    Lower-upper bounds & & & \\
+    $\text{MC}_1$ (naive) & $5.24$ & $4.7 \cdot 10^{-2}$ ($0.91\%$)& $0.52$ \\
+    $\text{MC}_2$ (trapeze)  & $5.25$ & $4.8 \cdot 10^{-2}$ ($0.91\%$)& $0.32$  \\
+    $\text{MC}_3$ (conditional)  & $5.27$ & $4.8 \cdot 10^{-2}$ ($0.91\%$)& $0.31$  \\
+    $\text{MC}_1$ (+ control) & $5.28$ & $3.4 \cdot 10^{-3}$ ($0.06\%$)& $0.39$ \\
+    $\text{MC}_2$ (+ control)  & $5.28$ & $3.4 \cdot 10^{-3}$ ($0.06\%$)& $0.27$ \\
+    $\text{MC}_3$ (+ control)  & $5.28$ & $3.4 \cdot 10^{-3}$ ($0.06\%$)& $0.22$ \\
+    PDE approach & $5.05$ & \textit{NA} & $0.51$ \\
+    Lower-upper bounds & $5.29$ & $7.7 \cdot 10^{-3}$ ($0.14\%$)& $0.19$ \\
     \hline
-\end{tabular}
+    \end{tabular} 
+    \caption{Comparison of the implemented methods}
+\end{table}
 \end{center}
 
 
@@ -795,3 +841,5 @@ It would be also possible to study more in detail the stability and the consiste
 \bibliographystyle{plain}
 
 \end{document}
+
+
