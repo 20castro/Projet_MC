@@ -91,10 +91,10 @@ where $W := (W_t)_{t \in [0, T]}$ denotes a Wiener process under $\mathbb Q$.
 
 In the context of Monte-Carlo methods, we call \textbf{a scheme} a random variable $\bar A_T$ made to approximate
 the quantity $A_T$ for a given set of parameters. Therefore, provided $\{ \bar A_T^i \}_{i = 1, \dots, n}$ are
-independent and identically distributed (i.i.d.) copies of $\bar A_T$, the Monte-Carlo estimate of the fixed-strike
-Asian call we get is:
+independent and identically distributed (i.i.d.) copies of $\bar A_T$, the Monte-Carlo estimator of the fixed-strike
+Asian call price we get is:
 \[
-	\theta_n := e^{-rT} \sum_{i=1}^n \left[ \bar A_T^i - K \right]_+ \xrightarrow[n \to \infty]{\mathbb P}
+	\theta_n := e^{-rT} \sum_{i=1}^n \left[ \bar A_T^i - K \right]_+ \xrightarrow[n \to \infty]{\mathbb Q}
 	e^{-rT} \mathbb E_{\mathbb Q} \left[ [ \bar A_T - K ]_+ \right]
 \]
 
@@ -171,7 +171,7 @@ At this stage, this quantity is not known either. \cite{main} introduces the fol
 	\notag
 \end{align}
 
-We need to further simplify this expression. Let us considere the function $f$ defined as:
+We need to further simplify this expression. Let us consider the function $f$ defined as:
 \[
 	f : (t, w) \mapsto \exp \left\{ \left( r - \frac{\sigma^2}{2} \right) t + \sigma w \right\}
 \]
@@ -216,7 +216,7 @@ $e^{-rT} \left[ A_T - K \right]_+$ conditionally to the trajectory. Similarly:
 \end{align*}
 
 Furthermore, the remaining integral of the increment of the Brownian Motion is a Gaussian variable and we can
-compute its expectation and variance conditionally to the trajectory since the integrand follows a Brownian Bridge.
+compute its expectation and variance conditionally to the trajectory since the integrand follows a Brownian bridge.
 Thus, we can indeed simulate it as stated above. In the following, we note:
 \[
 	\bar I_k^m := \left( \frac{1}{h}
@@ -335,7 +335,7 @@ Lambert et al. \cite{main} finally propose a variance reduction technique
 for the three schemes above. It uses a control variate as introduced by Kemna et al. \cite{Vorst}.
 
 \begin{equation}
-	\theta_n = \sum_{i=1}^n \left( e^{-rT} \left[ A_T^i - K \right]_+ + \beta \left( Z^i - \mathbb E [Z] \right) \right)
+	\theta_n = \sum_{i=1}^n \left( e^{-rT} \left[ \bar A_T^i - K \right]_+ + \beta \left( Z^i - \mathbb E [Z] \right) \right)
 	\tag{$\ast$}
 \end{equation}
 
@@ -399,9 +399,9 @@ As expected, the statistical error (ie: the width of the confidence interval) is
 parameters, it is about ten times smaller. The result is quite impressive. Besides, it does not only allow to take
 a lower $n$ with better results but also to use a lower $m$. However, considering the assumptions this method relies on,
 one could wonder whether this variance reduction technique is still as efficient when the parameters
-($r$, $\sigma$ or $T$ for instance) are high. We testes this scheme for degenerate parameters and obtained really
+($r$, $\sigma$ or $T$ for instance) are high. We tested this scheme for degenerate parameters and obtained really
 satisfactory results: when $\sigma = r = 50\%$, the variance when using a control variate is still divided by 4
-compared to the naive scheme (1).
+compared to the uncontrolled version.
 
 \
 
@@ -426,12 +426,11 @@ to adapt the estimates of $Z$ accordingly. Let us define:
 
 With (provided the same computations as for $\bar I_k^m$):
 \[
-	\bar J_k^m := \left( \frac{1}{h} \int_{t_k}^{t_{k+1}} \bar W_u du \ \Big\vert \ \bar W_{t_{k+1}}^m, \bar W_{t_k}^m \right)
+	\bar J_k^m := \left( \frac{1}{h} \int_{t_k}^{t_{k+1}} W_u du \ \Big\vert \ \mathcal B_h \right)
 	\sim \mathcal N \left( \frac{\bar W_{t_{k+1}}^m + \bar W_{t_k}^m}{2}, \frac{h}{12} \right)
 \]
 
 It yields two new estimators:
-
 \begin{align}
 	e^{-rT} \left[ \bar A_T^{e, m} - K \right]_+ + \hat\beta_e \left( \bar Z_T^{e, m} - \mathbb E [Z] \right)
 	\tag{5} \\
@@ -454,8 +453,9 @@ second one) is that it can be extended to other diffusion processes, while keepi
 		\left( \frac{1}{h} \int_{t_k}^{t_{k+1}} \left( S_u - S_{t_k} \right) du \ \Big\vert \ \mathcal B_h \right) \right\} \tag{3+}
 \end{equation}
 
-This would for instance allow to use stochastic volatility models as long as the conditional integral can be simulated.
-This is a very important aspect in order to better model the actual stock markets.
+This can be done by replacing $S_u$ by its simulation as part of a continuous Euler scheme.
+This allows for instance to use stochastic volatility models, which
+is a very important aspect in order to better model the actual stock markets.
 Unfortunately, it is not straight-forward to adapt the variance reduction technique as it strongly relies on
 Black-Scholes model and consequently, the closed-form solution of an integral.
 
@@ -468,20 +468,19 @@ Therefore, finding the price of the option is equivalent to solving a PDE.
 To start with, we introduce the mathematical background and a well-chosen transformation as developed 
 in \cite{Rogers} that satisfies a simple PDE.
 As usual when it comes to pricing an option based on a PDE model, we define:
-
 \begin{equation}
-	\phi(t,x) = \mathbb E \left[ \left[ \int_{t}^{T} \frac{S_{t}}{T}\,dt-x \right]_{+} \ \big\vert \ S_{t}=1 \right]
+	\phi(t,x) = \mathbb E \left[ \left[ \int_{t}^{T} \frac{S_{t}}{T}\,dt-x \right]_{+} \ \bigg\vert \ S_{t}=1 \right]
 	\tag{I}
 \end{equation}
 
 The goal is to find a PDE satisfied by $\phi$. Let us define $M$ a well-chosen martingale.
 Using It\^o's formula:
 \begin{align*}
-        M_{t} &= \mathbb E \left[ \left[ \int_{0}^{T} \frac{S_{u}}{T}\,du-K \right]_{+} \ \Big\vert \ F_{t} \right] \\
+        M_{t} &= \mathbb E \left[ \left[ \int_{0}^{T} \frac{S_{u}}{T}\,du-K \right]_{+} \ \bigg\vert \ F_{t} \right] \\
         M_{t} &= \mathbb E \left[ \left[ \int_{t}^{T} \frac{S_{u}}{T}\,du+\int_{0}^{t} \frac{S_{u}}{T}\,du-K \right]_{+}
-        	 \ \Big\vert \ F_{t} \right]  \\
+        	 \ \bigg\vert \ F_{t} \right]  \\
         M_{t} &= S_{t} \mathbb E \left[ \left[ \int_{t}^{T} \frac{S_{u}}
-        {TS_{t}}\,du -\frac{K-\int_{0}^{t} \frac{S_{u}}{T}\,du}{S_{t}} \right]_{+} \ \Big\vert \ F_{t} \right] \\
+        {TS_{t}}\,du -\frac{K-\int_{0}^{t} \frac{S_{u}}{T}\,du}{S_{t}} \right]_{+} \ \bigg\vert \ F_{t} \right] \\
         M_{t} &= S_{t}\phi(t,\zeta_{t})
 \end{align*}
 
@@ -550,15 +549,15 @@ To compute the price, we use an explicit scheme:
 Some parameters are fixed during each simulation:
 
 \begin{itemize}[label=$\cdot$]
-    \item $\sigma\in\{0.15;0.25\}$ the volatility is taken constant
-    \item $r=0.03$ the interest rate is constant 
-    \item $T=1$ the maturity
-    \item $x\in[-5;5]$ 
+    \item $\sigma\in\{0.15;0.25\}$, the volatility is taken constant.
+    \item $r=0.03$, the interest rate is constant.
+    \item $T=1$ year, the maturity.
+    \item $x\in[-5;5]$
 \end{itemize}
 
 The space and the time are discretized with  space step $\delta \approx 2.10^{-3}$ and time step $h \approx 10^{-3}$.
 The space step should not be too small with respect to time otherwise it could lead to some instabilities or unsatisfactory
-results. Intuitively as the initial conditions at $t=T$ vanishes (ie: $\phi(T,x) = 0$ for $x > 0$),
+results. Intuitively as the terminal condition at time $T$ vanishes (ie: $\phi(T,x) = 0$ for $x > 0$),
 the operator $G$ (proportional to the derivatives of $f$) takes higher number of time iterations $t_i$
 to reach and impact $\phi(t_i,.)$ on the whole positive domain $x>0$.
 \\
@@ -627,7 +626,7 @@ For any centered Gaussian variable $Z$, we get:
 \tag{III}
 \end{equation}
  
-Note the inequality used here is the same as the approximation (S) used in the Monte-Carlo scheme (2).
+Note the inequality used here is the same as the approximation (S) introduced in the Monte-Carlo scheme (2).
 What is more, for any random variable $U$:
 
  \begin{equation}
@@ -690,7 +689,7 @@ Indeed, by bilinearity of the covariance:\\
     =\mathrm{Cov}(Z,W_t\mid Z)
     =0
 \]
-As a consequence, we just found an ideal candidate for $Z$ : assuming that the initial integral
+As a consequence, we just found an ideal candidate for $Z$: assuming that the initial integral
 $\mathrm{Var}[Y\mid Z]$ is close to $V$, vanishing $V$ implies reducing significantly $\mathrm{Var}[Y\mid Z]$.
 With the above definition of $Z$:
 \[
@@ -699,7 +698,7 @@ With the above definition of $Z$:
 
 Where:
 \begin{align*}
-    A&=\int_{0}^{1}d s\int_{0}^{1}\ (e^{f(s,Z)+f(t,Z)}-1-f(s,Z)-f(t,Z)).|e^{\sigma^{2}v_{s t}}-1|d t\\
+    A&=\int_{0}^{1}d s\int_{0}^{1}\ (e^{f(s,Z)+f(t,Z)}-1-f(s,Z)-f(t,Z))|e^{\sigma^{2}v_{s t}}-1|d t\\
     B&=\int_{0}^{1}d s\int_{0}^{1}(e^{\sigma^{2}v_{s t}}-1-\sigma^{2}v_{s t}) | 1+f(s,Z)+f(t,Z) | dt
 \end{align*}
 
@@ -725,7 +724,7 @@ As $Z=\int_{0}^{1}W_u du$, we deduce that $v=\frac{1}{3}$.
 
 \subsection{Computation of the theoretical bounds}
 
-Thanks to the previous part, we are now able to compute a lower and upper bounds for the price of the
+Thanks to the previous part, we are now able to compute a lower and a upper bound for the price of the
 fixed-strike Asian call. Indeed, the price $\mathbb{E}[Y^{+}]$ is framed by:
 \begin{equation}
     \underbrace{\mathbb{E}[\mathbb{E}[Y\mid Z]_{+}]}_{\text{lower bound}}
@@ -792,6 +791,7 @@ Notice that the bounds are not supposed to directly frame the PDE solution compu
     \includegraphics[width=\textwidth]{charts/Price_bounds25.png}
    
   \end{minipage}
+  \caption{Comparison between the PDE approach and the bounds technique}
 \end{figure}
 
 \section*{Conclusion}
@@ -833,10 +833,9 @@ of $n$ and $m$ should be used, requiring more processing time.
     Lower-upper bounds & $5.29$ & $7.7 \cdot 10^{-3}$ ($0.14\%$)& $0.19$ \\
     \hline
     \end{tabular} 
-    \caption{Comparison of the implemented methods}
+    \caption{Comparison of the implemented methods\\ \vspace{5pt}}
 \end{table}
 \end{center}
-
 
 \bibliography{bibliography}{}
 \bibliographystyle{plain}
